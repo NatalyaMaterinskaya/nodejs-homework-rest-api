@@ -1,12 +1,12 @@
-const contactMethods = require("../models/contacts");
+const { Contact } = require("../models/contacts");
 
-const contactSchema = require("../schemas/contacts");
+const { schemas } = require("../models/contacts");
 
 const httpError = require("../helpers/httpError");
 
 const listContacts = async (req, res, next) => {
   try {
-    const result = await contactMethods.listContacts();
+    const result = await Contact.find();
     res.json(result);
   } catch (error) {
     next(error);
@@ -16,7 +16,7 @@ const listContacts = async (req, res, next) => {
 const getContactById = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await contactMethods.getContactById(contactId);
+    const result = await Contact.findById(contactId);
     if (!result) {
       throw httpError(404, "Not found!");
     }
@@ -28,12 +28,12 @@ const getContactById = async (req, res, next) => {
 
 const addContact = async (req, res, next) => {
   try {
-    const verifiedResult = contactSchema.validate(req.body);
+    const verifiedResult = schemas.addSchema.validate(req.body);
     if (verifiedResult.error !== undefined) {
       throw httpError(400, "missing required name field");
     }
     const reqBody = verifiedResult.value;
-    const result = await contactMethods.addContact(reqBody);
+    const result = await Contact.create(reqBody);
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -43,7 +43,7 @@ const addContact = async (req, res, next) => {
 const removeContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await contactMethods.removeContact(contactId);
+    const result = await Contact.findByIdAndRemove(contactId);
     if (!result) {
       throw httpError(404, "Not found!");
     }
@@ -56,12 +56,32 @@ const removeContact = async (req, res, next) => {
 const updateContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const verifiedResult = contactSchema.validate(req.body);
+    const verifiedResult = schemas.addSchema.validate(req.body);
     if (verifiedResult.error !== undefined) {
       throw httpError(400, "missing fields");
     }
     const reqBody = verifiedResult.value;
-    const result = await contactMethods.updateContact(contactId, reqBody);
+    const result = await Contact.findByIdAndUpdate(contactId, reqBody, {new:true});
+    if (!result) {
+      throw httpError(404, "Not found!");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateStatusContact = async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const verifiedResult = schemas.updateFavoriteSchema.validate(req.body);
+    if (verifiedResult.error !== undefined) {
+      throw httpError(400, "missing field favorite");
+    }
+    const reqBody = verifiedResult.value;
+    const result = await Contact.findByIdAndUpdate(contactId, reqBody, {
+      new: true,
+    });
     if (!result) {
       throw httpError(404, "Not found!");
     }
@@ -77,4 +97,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact,
 };
