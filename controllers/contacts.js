@@ -43,7 +43,7 @@ const addContact = async (req, res, next) => {
 const removeContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await Contact.findByIdAndRemove(contactId);
+    const result = await Contact.findByIdAndDelete(contactId);
     if (!result) {
       throw httpError(404, "Not found!");
     }
