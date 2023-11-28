@@ -7,23 +7,35 @@ const httpError = require("../helpers/httpError");
 const { SECRET_KEY } = process.env;
 
 const authenticate = async (req, res, next) => {
-  try {
-    const { authorization = "" } = req.headers;
-    const [bearer, token] = authorization.split(" ");
-    if (bearer !== "Bearer") {
-      throw httpError(401, "Not authorized");
-    }
+  const { authorization } = req.headers;
 
-    const { id } = jwt.verify(token, SECRET_KEY);
-    const user = await User.findById(id);
-    if (!user || !user.token || user.token !== token) {
-      throw httpError(401, "Not authorized");
+  if (typeof authorization === "undefined") {
+    return res.status(401).send({ message: "Not authorized" });
+  }
+  
+  const [bearer, token] = authorization.split(" ");
+  console.log("token", token);
+  if (bearer !== "Bearer") {
+    return res.status(401).send({ message: "Not authorized" });
+  }
+
+  jwt.verify(token, SECRET_KEY, async (err, decode) => {
+    if (err) {
+      return res.status(401).send({ message: "Not authorized" });
+    }
+    try {
+      const { id } = decode;
+      const user = await User.findById(id);
+      console.log("user", user);
+      if (!user || !user.token || user.token !== token) {
+        throw httpError(401, "Not authorized");
       }
       req.user = user;
       next();
-  } catch (error) {
-    next(error);
-  }
+    } catch (error) {
+      next(error);
+    }
+  });
 };
 
 module.exports = authenticate;

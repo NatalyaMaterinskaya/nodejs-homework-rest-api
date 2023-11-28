@@ -13,11 +13,11 @@ const register = async (req, res, next) => {
   try {
     const verifiedResult = schemas.registerSchema.validate(req.body);
     if (verifiedResult.error !== undefined) {
-      throw httpError(400, verifiedResult.error);
+      throw httpError(400, verifiedResult.error.message);
     }
     const reqBody = verifiedResult.value;
     const { email, password } = reqBody;
-    const user = await User.findOne(email);
+    const user = await User.findOne({email});
     if (user) {
       throw httpError(409, "Email in use");
     }
@@ -38,11 +38,11 @@ const login = async (req, res, next) => {
   try {
     const verifiedResult = schemas.registerSchema.validate(req.body);
     if (verifiedResult.error !== undefined) {
-      throw httpError(400, verifiedResult.error);
+      throw httpError(400, verifiedResult.error.message);
     }
     const reqBody = verifiedResult.value;
     const { email, password } = reqBody;
-    const user = await User.findOne(email);
+    const user = await User.findOne({email});
     if (!user) {
       throw httpError(401, "Email or password is wrong");
     }

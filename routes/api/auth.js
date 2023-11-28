@@ -13,9 +13,9 @@ const {
   logout,
 } = controllers;
 
-router.post("/users/register", register);
-router.post("/users/login", login);
-router.get("/users/current",authenticate, getCurrent);
-router.post("/users/logout", authenticate, logout);
+router.post("/register", register);
+router.post("/login", login);
+router.get("/current",authenticate, getCurrent);
+router.post("/logout", authenticate, logout);
 
 module.exports = router;
