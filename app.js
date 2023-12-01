@@ -13,6 +13,7 @@ const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 app.use(logger(formatsLogger))
 app.use(cors())
 app.use(express.json())
+app.use(express.static("public"))
 
 app.use("/users", authRouter);
 app.use('/api/contacts', contactsRouter)
@@ -22,6 +23,9 @@ app.use((req, res) => {
 })
 
 app.use((err, req, res, next) => {
+  if (typeof req.file === "undefined") {
+    res.status(400).json({ message: "Invalid request body" });
+  }
   res.status(err.status).json({ message: err.message });
 })
 
