@@ -4,7 +4,6 @@ const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs/promises");
 
-
 const { User } = require("../models/user");
 
 const { schemas } = require("../models/user");
@@ -105,8 +104,11 @@ const getCurrent = async (req, res, next) => {
 
 const updateAvatar = async (req, res, next) => {
   try {
+    if (typeof req.file === "undefined") {
+      res.status(400).json({ message: "Invalid request body" });
+    }
     const { _id } = req.user;
-    const { path: tempUpload, originalname} = req.file;
+    const { path: tempUpload, originalname } = req.file;
     const fileName = `${_id}_${originalname}`;
     const resultUpload = path.join(avatarDir, fileName);
     await fs.rename(tempUpload, resultUpload);

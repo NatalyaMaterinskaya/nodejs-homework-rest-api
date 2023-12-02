@@ -24,7 +24,7 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   if (typeof req.file === "undefined") {
-    res.status(400).json({ message: "Invalid request body" });
+    res.status(400).json({ message: err.message });
   }
   res.status(err.status).json({ message: err.message });
 })
