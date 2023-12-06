@@ -1,5 +1,8 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs/promises");
 
 const { User } = require("../models/user");
 
@@ -7,7 +10,11 @@ const { schemas } = require("../models/user");
 
 const httpError = require("../helpers/httpError");
 
+const resizeFile = require("../helpers/resizeFile");
+
 const { SECRET_KEY } = process.env;
+
+const avatarDir = path.join(__dirname, "../", "public", "avatars");
 
 const register = async (req, res, next) => {
   try {
@@ -17,12 +24,17 @@ const register = async (req, res, next) => {
     }
     const reqBody = verifiedResult.value;
     const { email, password } = reqBody;
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
     if (user) {
       throw httpError(409, "Email in use");
     }
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ email, password: hashPassword });
+    const avatarURL = gravatar.url(email);
+    const newUser = await User.create({
+      email,
+      password: hashPassword,
+      avatarURL,
+    });
     res.status(201).json({
       user: {
         email: newUser.email,
@@ -42,7 +54,7 @@ const login = async (req, res, next) => {
     }
     const reqBody = verifiedResult.value;
     const { email, password } = reqBody;
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
     if (!user) {
       throw httpError(401, "Email or password is wrong");
     }
@@ -77,13 +89,39 @@ const logout = async (req, res, next) => {
   }
 };
 
-const getCurrent = async (req, res) => {
-  const { email, subscription } = req.user;
+const getCurrent = async (req, res, next) => {
+  try {
+    const { email, subscription } = req.user;
 
-  res.status(200).json({
-    email: email,
-    subscription: subscription,
-  });
+    res.status(200).json({
+      email: email,
+      subscription: subscription,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateAvatar = async (req, res, next) => {
+  try {
+    if (typeof req.file === "undefined") {
+      res.status(400).json({ message: "Invalid request body" });
+    }
+    const { _id } = req.user;
+    const { path: tempUpload, originalname } = req.file;
+    const fileName = `${_id}_${originalname}`;
+    const resultUpload = path.join(avatarDir, fileName);
+    await fs.rename(tempUpload, resultUpload);
+    resizeFile(resultUpload);
+    const avatarURL = path.join("avatars", fileName);
+    await User.findByIdAndUpdate(_id, { avatarURL });
+
+    res.status(200).json({
+      avatarURL: avatarURL,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = {
@@ -91,4 +129,5 @@ module.exports = {
   login,
   logout,
   getCurrent,
+  updateAvatar,
 };

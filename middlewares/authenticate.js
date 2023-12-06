@@ -14,7 +14,6 @@ const authenticate = async (req, res, next) => {
   }
   
   const [bearer, token] = authorization.split(" ");
-  console.log("token", token);
   if (bearer !== "Bearer") {
     return res.status(401).send({ message: "Not authorized" });
   }
@@ -26,7 +25,6 @@ const authenticate = async (req, res, next) => {
     try {
       const { id } = decode;
       const user = await User.findById(id);
-      console.log("user", user);
       if (!user || !user.token || user.token !== token) {
         throw httpError(401, "Not authorized");
       }
