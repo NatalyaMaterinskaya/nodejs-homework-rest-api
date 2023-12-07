@@ -8,9 +8,19 @@ const upload = require("../../middlewares/upload.js");
 
 const router = express.Router();
 
-const { register, login, getCurrent, logout, updateAvatar } = controllers;
+const {
+  register,
+  login,
+  getCurrent,
+  logout,
+  updateAvatar,
+  verify,
+  resendVerify,
+} = controllers;
 
 router.post("/register", register);
+router.get("/verify/:verificationToken", verify);
+router.post("/verify", resendVerify);
 router.post("/login", login);
 router.get("/current", authenticate, getCurrent);
 router.post("/logout", authenticate, logout);
